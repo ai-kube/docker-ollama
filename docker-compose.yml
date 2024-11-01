@@ -1,0 +1,19 @@
+services:
+  ollama:
+    image: ai-kube/ollama:latest
+    build:
+      context: ./build
+    container_name: ollama
+    init: true
+    volumes:
+      - ./ollama:/app/.ollama
+    ports:
+      - 11434:11434
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
