@@ -1,16 +1,20 @@
-FROM --platform=linux/amd64 debian:stable-slim
+FROM debian:stable-slim
 
 ARG WORKER_UID=1000
 ARG WORKER_GID=1000
 ARG WORKER_HOME=/app
 ARG WORKER=ollama
+ARG OLLAMA_REL_URL=https://github.com/ollama/ollama/releases/latest/download/ollama-linux-amd64.tgz
 
 USER root
 
 # Set up curl and certificates
-RUN set -ex \
+RUN --mount=type=tmpfs,target=/var/cache/apt \
+    --mount=type=tmpfs,target=/var/lib/apt \
+set -ex \
 &&  apt-get update \
-&&  apt-get install -y curl \
+&&  apt-get install -y --no-install-recommends curl \
+&&  apt-get clean \
 &&  rm -rf /var/lib/apt/lists/*
 
 # Set up the default user 'ollama'
@@ -22,11 +26,9 @@ RUN set -ex \
 
 # Grab ollama released binary for the platform
 RUN set -ex \
-&&  curl -L https://github.com/ollama/ollama/releases/latest/download/ollama-linux-amd64.tgz -o /tmp/ollama.tgz \
 &&  mkdir -p /opt/ollama \
-&&  tar -C /opt/ollama -xzf /tmp/ollama.tgz \
-&&  chown -R 0:0 /opt/ollama \
-&&  rm -f /tmp/ollama.tgz
+&&  curl -L ${OLLAMA_REL_URL} -o - | tar -C /opt/ollama -xzf - \
+&&  chown -R 0:0 /opt/ollama
 
 USER ${WORKER}
 
